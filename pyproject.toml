@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "veridoc"
+version = "0.1.0"
+description = "CI-native documentation layer for RTL projects"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT" }
+authors = [
+    { name = "Veridoc Authors" }
+]
+dependencies = []
+
+[project.scripts]
+veridoc = "veridoc.cli:main"
