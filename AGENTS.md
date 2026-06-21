@@ -17,7 +17,7 @@ Primary agentic value: index an unfamiliar RTL codebase without reading every fi
 pip install veridoc
 ```
 
-No external runtime dependencies. Requires Python 3.7+. `verilint` requires verilator to be installed.
+No Python runtime dependencies. Requires Python 3.7+. `verilint` requires verilator (system binary — `apt install verilator` / `brew install verilator`). If verilator is absent, `verilint` exits 1 with install instructions; `veridoc` is unaffected.
 
 ## veridoc
 

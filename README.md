@@ -24,12 +24,25 @@ pip install veridoc
 Or from source:
 
 ```bash
-git clone https://github.com/your-org/veridoc
+git clone https://github.com/vishwaksen-1/veridoc
 cd veridoc
 pip install -e .
 ```
 
-Requires Python 3.7+. `verilint` additionally requires [verilator](https://verilator.org) to be installed.
+**Requirements**
+
+- Python 3.7+
+- `verilint` requires [verilator](https://verilator.org) — a system binary, not installable via pip:
+
+```bash
+# Debian / Ubuntu
+sudo apt install verilator
+
+# macOS
+brew install verilator
+```
+
+`veridoc` has no external dependencies. If verilator is missing, `verilint` will exit with a clear error and install instructions.
 
 ---
 

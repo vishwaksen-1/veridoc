@@ -19,6 +19,13 @@ keywords = [
 ]
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/vishwaksen-1/veridoc"
+Issues = "https://github.com/vishwaksen-1/veridoc/issues"
+
 [project.scripts]
 veridoc = "veridoc.cli:main"
 verilint = "veridoc.lint:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

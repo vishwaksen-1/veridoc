@@ -6,9 +6,27 @@ import argparse
 import shutil
 
 
+def _get_verilator_version():
+    try:
+        out = subprocess.check_output(["verilator", "--version"], text=True)
+        return out.strip().splitlines()[0]
+    except Exception:
+        return None
+
+
 def _check_verilator():
     if not shutil.which("verilator"):
-        print("Error: verilator not found. Install with: apt install verilator", file=sys.stderr)
+        print(
+            "Error: verilator is not installed or not in PATH.\n"
+            "\n"
+            "Install it:\n"
+            "  Debian / Ubuntu:  sudo apt install verilator\n"
+            "  macOS:            brew install verilator\n"
+            "  From source:      https://verilator.org/guide/latest/install.html\n"
+            "\n"
+            "Note: verilator is a system tool and cannot be installed via pip.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
 
@@ -130,6 +148,9 @@ def main():
     args = parser.parse_args()
 
     _check_verilator()
+
+    if args.v:
+        print(f"Using {_get_verilator_version()}")
 
     any_issues = False
     for filepath in args.file:
