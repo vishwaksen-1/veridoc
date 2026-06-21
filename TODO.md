@@ -12,4 +12,8 @@
 	- When it adds lint-test, tb-test commands on the top, it should check if it's doing a dubplicate job, and behave appropriately.
 
 
+- [ ] Add a Graphviz export for the dependency graph of callgraph. Preferably as a separate tool to work on the generated json graph.
 
+- [ ] MCP server wrapper
+	Expose veridoc and verilint as MCP tools so agents (Claude, Cursor, Devin, etc.) can call them natively without subprocess invocation.
+	See examples/mcp_server_description.md for the proposed tool schema and implementation notes.

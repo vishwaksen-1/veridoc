@@ -12,6 +12,11 @@ license = { text = "MIT" }
 authors = [
     { name = "Veridoc Authors" }
 ]
+keywords = [
+    "verilog", "systemverilog", "rtl", "fpga", "asic", "eda",
+    "documentation", "linting", "ci", "hardware", "verilator",
+    "dependency-graph", "code-analysis", "agentic"
+]
 dependencies = []
 
 [project.scripts]
