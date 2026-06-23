@@ -1,127 +1,125 @@
-# Skills Reference
+# veridoc & verilint skill
 
-Detailed capability map for both veridoc tools. Useful when evaluating what is already handled, what has known limitations, and what is explicitly out of scope.
-
----
-
-## veridoc
-
-### Parsing
-
-| Capability | Notes |
-|-----------|-------|
-| Strip `//` and `/* */` comments before parsing | Prevents comment content from poisoning regex matches |
-| Match `module name #(...) (...);` | ANSI-2001 style |
-| Match `module name (...);` | Port-list style without parameter block |
-| Extract parameters from `#(parameter ...)` block | Type qualifiers (`integer`, `logic`, etc.) stripped; stores `NAME = default` |
-| Extract `input` / `output` / `inout` ports | Direction keyword required on at least the first port in a group |
-| Comma-inherited port direction | `output reg a, b, c` — all three captured as outputs |
-| Strip macro prefixes on port declarations | `` `MACRO_NAME port_name `` → bare name extracted |
-| Detect module instantiations | Pattern: `mod_name [#(...)] instance_name (` where `mod_name` is a known module |
-| Skip testbench files | Auto-excludes `_tb.v`, `_tb.sv`, `_bench.v`, `_bench.sv`, `_testbench.v`, `_testbench.sv` |
-| Scan `.v` files | |
-| Scan `.sv` files | Basic port/param extraction only; SV-specific constructs (interfaces, packages, etc.) are not parsed |
-| Recurse into subdirectories | Via `-d` flag |
-| Accept explicit file list | Via `-f` flag, no directory traversal |
-| Exclude paths by substring | Via `--exclude` |
-| **Not supported**: Pre-2001 Verilog port style | `input clk;` declarations inside module body |
-| **Not supported**: Multiple modules per file | Only the first `module` block is parsed |
-| **Not supported**: `include` / macro expansion | Macros in port names may partially parse |
-
-### Dependency graph
-
-| Capability | Notes |
-|-----------|-------|
-| Build `calls` list per module | Instantiations of known modules only |
-| Build `called_by` list per module | Inverse of `calls`, computed automatically |
-| Self-instantiation detection | Tracked as a CI issue |
-| Export graph to `graph.json` | `--json-graph` flag; see `docs/graph_schema.json` |
-
-### Markdown generation
-
-| Capability | Notes |
-|-----------|-------|
-| Create new `.md` per module | Sections: Description, Parameters, Inputs, Outputs, Inouts, Calls, Called By |
-| Preserve existing `Description` section | Never overwritten; defaults to `TODO: Add description` |
-| Update managed sections in-place | Regex-based section replacement in existing files |
-| Diff-aware writes | File is only written if content changed |
-| Track additions / removals per section | Used for verbose diff output |
-| Section-level diff in verbose mode | `-vv` shows `+add/-remove` counts per section |
-
-### Logging and output
-
-| Capability | Notes |
-|-----------|-------|
-| Completion summary | Always printed: `N module(s) processed — M doc(s) written, K unchanged` |
-| Log file (always) | Written to a temp `.log` file whenever any docs are modified |
-| Print modified file paths | `-v` flag |
-| Print section-level diffs | `-vv` flag |
-| Missing description report | Printed when descriptions are still TODO (suppressed in `--ci` mode) |
-| Dry-run preview | `--dry-run` — no files written; always shows would-be-written list |
-
-### CI mode (`--ci`)
-
-| Check | Trigger |
-|-------|---------|
-| Missing description | Module description starts with `TODO` |
-| No IO | Module has no inputs and no outputs |
-| Self-instantiation | Module instantiates itself |
-
-All checks produce a machine-readable `*_errors.log` file. `--print-errors` mirrors them to stdout. Exit code 1 on any failure.
+Use this skill whenever you add, modify, or are asked to document a Verilog/SystemVerilog RTL file.
+Also use it when asked to lint a file or check for Verilator warnings.
 
 ---
 
-## verilint
+## Tools
 
-### Lint execution
+Both tools live in the project venv. Always activate it first:
 
-| Capability | Notes |
-|-----------|-------|
-| Run `verilator --lint-only -Wall` | Per-file invocation |
-| Pass include directories | `-I DIR` flag, repeatable; forwarded as `-IDIR` to verilator |
-| Parse `%Warning-*` lines | Extracts file path, line number, message |
-| Parse `%Error:` lines | Same |
-| Skip verilator context/arrow lines | Lines not starting with `%Warning`/`%Error` are ignored |
-| Filter to target file only | Warnings from included files or other modules are not tagged |
-| First message per line wins | Avoids unreadable stacked inline comments |
-| Out-of-bounds line guard | Line numbers beyond file length are silently skipped (macro expansions) |
+```bash
+source .venv/bin/activate
+```
 
-### Source file tagging
-
-| Capability | Notes |
-|-----------|-------|
-| Append `/* Check: message */` to warned line | Inline, end-of-line |
-| Replace existing `/* Check: */` on re-run | Idempotent; does not stack comments |
-| Insert `// lint-test: <command>` header | Added after the leading comment block |
-| Insert `// tb-test: tba` header | Placeholder for testbench linkage |
-| Skip header insertion if already present | Idempotent |
-| Preserve leading copyright / file-header comments | Headers inserted after them, not before |
-
-### Run modes
-
-| Mode | Behaviour |
-|------|-----------|
-| Default | Tag files in place, print count per file |
-| `--dry-run` | Print issues per line, write nothing |
-| `-v` | Print full raw verilator output |
-| Exit code `0` | All files clean |
-| Exit code `1` | One or more issues found |
+- **`veridoc`** — generates and updates Markdown docs from RTL source
+- **`verilint`** — runs Verilator lint and tags warnings inline in source files
 
 ---
 
-## Planned / not yet implemented
+## Critical: always pass `-o docs/modules`
 
-| Feature | Area |
-|---------|------|
-| Multi-module file support | veridoc parser |
-| Pre-2001 Verilog port style | veridoc parser |
-| SystemVerilog interfaces, packages, typedefs | veridoc parser |
-| Graph visualisation (Graphviz / Mermaid) | veridoc output |
-| HTML site generation | veridoc output |
-| Lint rule: unused ports | veridoc CI |
-| Lint rule: naming conventions | veridoc CI |
-| `verilint` per-directory batch mode | verilint |
-| `verilint` `--clear` to remove all tags | verilint |
-| Tree-sitter / pyverilog optional backend | veridoc parser |
-| GitHub Actions workflow template | integration |
-| Caching for large repos | performance |
+The default output directory is `temp/docs/modules`. The project docs live in `docs/modules`.
+**Every veridoc invocation must include `-o docs/modules`** or docs land in the wrong place.
+
+---
+
+## When to run veridoc
+
+| Situation | Command |
+|-----------|---------|
+| Single file added or modified | `veridoc -f rtl/path/to/file.v -o docs/modules` |
+| Multiple files modified | `veridoc -f rtl/a.v rtl/b.v -o docs/modules` |
+| Full rescan (e.g. after a refactor that touches many files) | `veridoc -d rtl/ -o docs/modules` |
+| Also regenerate the dependency graph | add `--json-graph` → writes `docs/modules/graph.json` |
+| Preview without writing anything | add `--dry-run` |
+| See which files changed | add `-v` |
+| See which sections changed within each file | add `-vv` |
+
+### What veridoc manages (auto-updated from source):
+- Parameters, Inputs, Outputs, Inouts, Calls, Called By
+
+### What veridoc never touches:
+- The `## Description` section — preserved as-is once written; defaults to `TODO: Add description` on first generation
+- Any extra sections you add manually (e.g. `## State Machine`, `## Notes`) — left alone
+
+### After generating a new module doc:
+Open the generated `docs/modules/<module>.md` and fill in the `## Description` section. veridoc will never overwrite it.
+
+---
+
+## When to run verilint
+
+Run verilint on any RTL file you have just edited or created, before updating its doc.
+
+```bash
+# See issues without modifying the file
+verilint rtl/path/to/file.v --dry-run
+
+# Tag issues inline (idempotent — re-running updates existing tags)
+verilint rtl/path/to/file.v
+
+# If the file uses `include with headers in another dir
+verilint rtl/path/to/file.v -I rtl/include/
+```
+
+### What verilint does to the source file:
+1. Inserts `// lint-test: verilator --lint-only -Wall <file>` header (once, idempotent)
+2. Inserts `// tb-test: tba` header placeholder (once, idempotent)
+3. Appends `/* Check: <message> */` at the end of any warned line
+4. Re-running replaces existing `/* Check: */` tags — does not stack them
+
+### What to do with Check tags:
+- Fix the underlying issue in the RTL
+- Re-run verilint to confirm the tag disappears (exit 0 = clean)
+- Do not remove tags manually unless you are deliberately suppressing a known false positive
+
+---
+
+## Standard workflow (modify an existing RTL file)
+
+```bash
+source .venv/bin/activate
+
+# 1. Lint the file — fix any Check-tagged lines
+verilint rtl/path/to/module.v
+# fix issues in source, then re-run until exit 0
+
+# 2. Regenerate the doc
+veridoc -f rtl/path/to/module.v -o docs/modules -vv
+```
+
+## Standard workflow (add a new RTL file)
+
+```bash
+source .venv/bin/activate
+
+# 1. Lint the new file
+verilint rtl/path/to/new_module.v
+
+# 2. Generate its doc (also rebuild graph so new module appears)
+veridoc -f rtl/path/to/new_module.v -o docs/modules --json-graph -vv
+
+# 3. Open the generated doc and write the Description section
+# docs/modules/new_module.md  →  replace "TODO: Add description" with real text
+```
+
+---
+
+## CI check (do not run routinely — only when asked)
+
+```bash
+veridoc -d rtl/ -o docs/modules --ci --print-errors
+```
+
+Exits 1 if any module has: missing description, no IO, or self-instantiation.
+
+---
+
+## Known limitations (do not work around — just be aware)
+
+- Pre-2001 Verilog port style (`input clk;` inside body) is not parsed
+- Only the first `module` block in a file is parsed
+- SV-specific constructs (interfaces, packages, typedefs) are not extracted
+- `include` / macro expansion is not supported — macro-prefixed port names may partially parse

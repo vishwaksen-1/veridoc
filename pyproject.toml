@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.7"
 license = { text = "MIT" }
 authors = [
-    { name = "Veridoc Authors" }
+    { name = "vishwaksen-1" }
 ]
 keywords = [
     "verilog", "systemverilog", "rtl", "fpga", "asic", "eda",
